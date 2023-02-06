@@ -12,6 +12,7 @@ class LeptjsonParserTest: public TestBase
 {
 public:
 	void TestParseLiteral();
+	void TestParseNumber();
 	void TestParseNoValue();
 	void TestParseInvaildValue();
 	void TestParseRootNotSingular();

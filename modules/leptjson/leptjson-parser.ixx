@@ -24,6 +24,8 @@ export
 struct LeptValue
 {
 	LeptType type;
+	double number;
+	bool operator ==(const LeptValue&)const = default;
 };
 
 export unique_ptr <LeptValue> ParseFile(const string&filename);

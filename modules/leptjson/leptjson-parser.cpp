@@ -27,6 +27,18 @@ void LeptParseWhitespace(LeptContent& content)
 	while (!json.empty()&&isspace(json.front()))json.remove_prefix(1);
 }
 
+unique_ptr <LeptValue> LeptParseNumber(LeptContent& content)
+{
+	string_view& json = content.json;
+	size_t n;
+	double num = stod(static_cast<string>(json), &n);
+	json.remove_prefix(n);
+
+	//TODO vaild number
+	return make_unique<LeptValue>(LeptType::LEPT_NUMBER,num);
+	
+}
+
 inline string GetInvalidValueErrorMsg(string_view str)
 {
 	return format("invaild value! parse '{}' failed", str);
@@ -50,7 +62,7 @@ unique_ptr <LeptValue> LeptParseValue(LeptContent& content)
 	case 't':return LeptParseLiteral(content, LeptType::LEPT_TRUE, "true");
 	case 'f':return LeptParseLiteral(content, LeptType::LEPT_FALSE, "false");
 
-	default:throw Exceptions::invaild_value_error("invaild value");
+	default:return LeptParseNumber(content);
 	}
 	std::unreachable();
 }
