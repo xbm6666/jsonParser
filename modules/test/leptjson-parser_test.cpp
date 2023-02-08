@@ -24,14 +24,15 @@ void LeptjsonParserTest::run()
 	TestParseLiteral();
 	TestParseNumber();
 	TestParseNoValue();
+	TestParseString();
 	TestParseInvaildValue();
 	TestParseRootNotSingular();
 }
 void LeptjsonParserTest::TestParseLiteral()
 {
-	expect(Parse("null")->type, LeptType::LEPT_NULL);
-	expect(Parse("true")->type, LeptType::LEPT_TRUE);
-	expect(Parse("false")->type, LeptType::LEPT_FALSE);
+	expect(*Parse("null"), LeptValue{ LeptType::LEPT_NULL });
+	expect(*Parse("true"), LeptValue{ LeptType::LEPT_TRUE });
+	expect(*Parse("false"), LeptValue{ LeptType::LEPT_FALSE });
 }
 
 void LeptjsonParserTest::TestParseNumber()
@@ -59,6 +60,14 @@ void LeptjsonParserTest::TestParseNumber()
 
 }
 
+void LeptjsonParserTest::TestParseString()
+{
+	Test("\"\"", LeptValue{ .type = LeptType::LEPT_STRING,.str = "" });
+	Test("\"Hello\"", LeptValue{ .type = LeptType::LEPT_STRING,.str = "Hello" });
+	Test("\"Hello\\nWorld\"", LeptValue{ .type = LeptType::LEPT_STRING,.str ="Hello\nWorld" });
+	Test("\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"", LeptValue{.type=LeptType::LEPT_STRING,.str= "\" \\ / \b \f \n \r \t" });
+}
+
 void LeptjsonParserTest::TestParseNoValue()
 {
 	TestException("", "novalue");
@@ -73,7 +82,7 @@ inline string GetInvalidValueErrorMsg(const string& str)
 void LeptjsonParserTest::TestParseInvaildValue()
 {
 	TestException("nul", GetInvalidValueErrorMsg("null"));
-	TestException("?", "invaild value");
+	TestException("?", "invalid stod argument");
 
 }
 
@@ -81,6 +90,10 @@ void LeptjsonParserTest::TestParseRootNotSingular()
 {
 	TestException("null x", "root not singular");
 
+}
+void LeptjsonParserTest::Test(std::string_view sv,const LeptValue& value)
+{
+	expect(*Parse(sv), value);
 }
 
 void LeptjsonParserTest::TestException(string_view sv, string msg)

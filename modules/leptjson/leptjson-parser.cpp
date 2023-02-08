@@ -5,7 +5,7 @@ module;
 #include<fstream>
 #include<format>
 #include<vector>
-
+#include<iostream>
 
 module Leptjson:Parser;
 
@@ -35,13 +35,64 @@ unique_ptr <LeptValue> LeptParseNumber(LeptContent& content)
 	json.remove_prefix(n);
 
 	//TODO vaild number
-	return make_unique<LeptValue>(LeptType::LEPT_NUMBER,num);
+	auto ret = make_unique<LeptValue>(LeptType::LEPT_NUMBER);
+	(*ret).number = num;
+	return ret;
 	
 }
 
 inline string GetInvalidValueErrorMsg(string_view str)
 {
 	return format("invaild value! parse '{}' failed", str);
+}
+
+unique_ptr <LeptValue> LeptParseString(LeptContent& content)
+{
+	string_view& json = content.json;
+	if(json.front()!='"') throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(json.substr(0,10)));
+	int n = 1;
+	string res;
+	while (json.size()>n)
+	{
+		switch (json[n])
+		{
+		case '"':
+		{
+			json.remove_prefix(n+1);
+			auto ret= make_unique<LeptValue>(LeptType::LEPT_STRING);
+			(*ret).SetString(res);
+			return  ret;
+		}
+		case '\\':
+		{
+			++n;
+			if(n==json.size()) throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(json.substr(0, n)));
+			switch (json[n]) {
+				case '\"':res+='\"'; break;
+				case '\\':res+='\\'; break;
+				case '/': res+='/' ; break;
+				case 'b': res+='\b'; break;
+				case 'f': res+='\f'; break;
+				case 'n': res+='\n'; break;
+				case 'r': res+='\r'; break;
+				case 't': res += '\t'; break;
+				default:  
+					if (json[n] < 0x20)
+						throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(json.substr(0, n+1)));
+					res += json[n];
+					break;
+			}
+			break;
+		}
+		default:
+			res += json[n];
+			break;
+		}
+
+		++n;
+	}
+	throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(json.substr(0, n)));
+
 }
 
 unique_ptr <LeptValue> LeptParseLiteral(LeptContent& content, LeptType type,string_view value)
@@ -61,6 +112,7 @@ unique_ptr <LeptValue> LeptParseValue(LeptContent& content)
 	case 'n':return LeptParseLiteral(content, LeptType::LEPT_NULL, "null");
 	case 't':return LeptParseLiteral(content, LeptType::LEPT_TRUE, "true");
 	case 'f':return LeptParseLiteral(content, LeptType::LEPT_FALSE, "false");
+	case '"':return LeptParseString(content);
 
 	default:return LeptParseNumber(content);
 	}
@@ -82,7 +134,10 @@ unique_ptr <LeptValue> Parse(string_view json)
 	LeptContent content{ .json = json };
 	LeptParseWhitespace(content);
 	auto ret= LeptParseValue(content);
-	if(!content.json.empty()) throw Exceptions::root_not_singular_error(R"(root not singular)");
+	if (!content.json.empty())
+	{
+		throw Exceptions::root_not_singular_error(R"(root not singular)");
+	}
 	return ret;
 }
 

@@ -25,9 +25,16 @@ protected:
 		++test_count_;
 
 		if (res == value)
+		{
 			++test_pass_;
+		}
 		else
-			std::cout << std::format("test {} failed", test_count_)<<std::endl;
+		{
+			std::cout << std::format("test {} failed", test_count_) << std::endl;
+			std::cout << "input value is " << res << std::endl;
+			std::cout <<"parsed value is " << value << std::endl;
+			std::cout << std::endl;
+		}
 	};
 
 	
