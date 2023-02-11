@@ -59,9 +59,7 @@ unique_ptr <LeptValue> LeptParseString(LeptContent& content)
 		case '"':
 		{
 			json.remove_prefix(n+1);
-			auto ret= make_unique<LeptValue>(LeptType::LEPT_STRING);
-			(*ret).SetString(res);
-			return  ret;
+			return unique_ptr<LeptValue>( new LeptValue{ .type=LeptType::LEPT_STRING ,.str=res});
 		}
 		case '\\':
 		{
@@ -95,6 +93,44 @@ unique_ptr <LeptValue> LeptParseString(LeptContent& content)
 
 }
 
+unique_ptr <LeptValue> LeptParseValue(LeptContent& content);
+unique_ptr <LeptValue> LeptParseArray(LeptContent& content)
+{
+	string_view&json = content.json;
+	auto msg = json;
+	json.remove_prefix(1);// remove '['
+
+	unique_ptr <LeptValue> p_ary(new LeptValue{ .type = LeptType::LEPT_ARRAY,.ary = {} });
+	LeptParseWhitespace(content);
+	if (json.empty()) throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+	if (json.front() == ']')
+	{
+		json.remove_prefix(1);
+		return p_ary;
+	}
+	while (true)
+	{
+		LeptParseWhitespace(content);
+		if (json.empty()) throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+		p_ary->ary.push_back(LeptParseValue(content));
+		LeptParseWhitespace(content);
+		switch (json.front())
+		{
+		case ',':
+			json.remove_prefix(1);
+			break;
+		case ']':
+			json.remove_prefix(1);
+			return p_ary;
+		default:
+			throw Exceptions::parse_miss_comma_or_square_bracket_error(GetInvalidValueErrorMsg(msg));;
+		}
+	}
+	
+
+
+}
+
 unique_ptr <LeptValue> LeptParseLiteral(LeptContent& content, LeptType type,string_view value)
 {
 	string_view& json = content.json;
@@ -113,6 +149,7 @@ unique_ptr <LeptValue> LeptParseValue(LeptContent& content)
 	case 't':return LeptParseLiteral(content, LeptType::LEPT_TRUE, "true");
 	case 'f':return LeptParseLiteral(content, LeptType::LEPT_FALSE, "false");
 	case '"':return LeptParseString(content);
+	case '[':return LeptParseArray(content);
 
 	default:return LeptParseNumber(content);
 	}

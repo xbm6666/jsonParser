@@ -25,6 +25,7 @@ void LeptjsonParserTest::run()
 	TestParseNumber();
 	TestParseNoValue();
 	TestParseString();
+	TestParseArray();
 	TestParseInvaildValue();
 	TestParseRootNotSingular();
 }
@@ -64,8 +65,19 @@ void LeptjsonParserTest::TestParseString()
 {
 	Test("\"\"", LeptValue{ .type = LeptType::LEPT_STRING,.str = "" });
 	Test("\"Hello\"", LeptValue{ .type = LeptType::LEPT_STRING,.str = "Hello" });
+	Test("\"中文\"", LeptValue{ .type = LeptType::LEPT_STRING,.str = "中文" });
 	Test("\"Hello\\nWorld\"", LeptValue{ .type = LeptType::LEPT_STRING,.str ="Hello\nWorld" });
 	Test("\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"", LeptValue{.type=LeptType::LEPT_STRING,.str= "\" \\ / \b \f \n \r \t" });
+}
+
+void LeptjsonParserTest::TestParseArray()
+{
+	Test("[ ]", LeptValue{ .type = LeptType::LEPT_ARRAY,.ary = {} });
+
+	LeptValue lv{ .type = LeptType::LEPT_ARRAY,.ary = {} };
+	lv.ary.emplace_back(new LeptValue{ .type = LeptType::LEPT_STRING,.str = "Hello" });
+	Test("[ \"Hello\"]",lv);
+
 }
 
 void LeptjsonParserTest::TestParseNoValue()

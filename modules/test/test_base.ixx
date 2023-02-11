@@ -27,6 +27,9 @@ protected:
 		if (res == value)
 		{
 			++test_pass_;
+
+			std::cout << std::format("test {} successed!", test_count_) << std::endl;
+
 		}
 		else
 		{

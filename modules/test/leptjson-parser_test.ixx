@@ -15,6 +15,7 @@ public:
 	void TestParseLiteral();
 	void TestParseNumber();
 	void TestParseString();
+	void TestParseArray();
 
 	void TestParseNoValue();
 	void TestParseInvaildValue();

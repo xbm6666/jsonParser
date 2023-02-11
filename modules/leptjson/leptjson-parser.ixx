@@ -3,6 +3,7 @@ module;
 #include<memory>
 #include<string>
 #include<iostream>
+#include<vector>
 
 export module Leptjson:Parser;
 
@@ -30,6 +31,7 @@ struct LeptValue
 	union {
 		double number;
 		string str;
+		vector<unique_ptr <LeptValue>>ary;
 	};
 
 
@@ -50,7 +52,9 @@ struct LeptValue
 		case leptjson::LeptType::LEPT_STRING:
 			return str == lhs.str;
 		case leptjson::LeptType::LEPT_ARRAY:
-			break;
+			if (ary.size() != lhs.ary.size()) return false;
+			for (int i = 0; i < ary.size(); ++i) if (*ary[i] != *lhs.ary[i]) return false;
+			return true;
 		case leptjson::LeptType::LEPT_OBJECT:
 			break;
 		default:
@@ -59,15 +63,29 @@ struct LeptValue
 		return true;
 	}
 
-	void SetString(const string& str)
-	{
-		this->type = LeptType::LEPT_STRING;
-		new(&this->str) string(str);
-	}
-
 	~LeptValue()
 	{
-		if (type == LeptType::LEPT_STRING) str.~str();
+		switch (type)
+		{
+		case leptjson::LeptType::LEPT_NULL:
+			break;
+		case leptjson::LeptType::LEPT_FALSE:
+			break;
+		case leptjson::LeptType::LEPT_TRUE:
+			break;
+		case leptjson::LeptType::LEPT_NUMBER:
+			break;
+		case leptjson::LeptType::LEPT_STRING:
+			str.~string();
+			break;
+		case leptjson::LeptType::LEPT_ARRAY:
+			ary.~vector();
+			break;
+		case leptjson::LeptType::LEPT_OBJECT:
+			break;
+		default:
+			break;
+		}
 	}
 };
 
@@ -92,6 +110,8 @@ ostream& operator<<(ostream& os, const LeptValue&lv)
 		os << lv.str;
 		break;
 	case leptjson::LeptType::LEPT_ARRAY:
+		os << "ary is ";
+		for (auto& a : lv.ary) os << *a;
 		break;
 	case leptjson::LeptType::LEPT_OBJECT:
 		break;

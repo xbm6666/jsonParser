@@ -30,6 +30,10 @@ public:
 	using leptjson_exception::leptjson_exception;
 };
 
+class parse_miss_comma_or_square_bracket_error :public leptjson_exception {
+public:
+	using leptjson_exception::leptjson_exception;
+};
 
 }
 }
