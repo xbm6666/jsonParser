@@ -46,7 +46,8 @@ inline string GetInvalidValueErrorMsg(string_view str)
 	return format("invaild value! parse '{}' failed", str);
 }
 
-unique_ptr <LeptValue> LeptParseString(LeptContent& content)
+
+string LeptParseStringRaw(LeptContent& content)
 {
 	string_view& json = content.json;
 	if(json.front()!='"') throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(json.substr(0,10)));
@@ -59,7 +60,7 @@ unique_ptr <LeptValue> LeptParseString(LeptContent& content)
 		case '"':
 		{
 			json.remove_prefix(n+1);
-			return unique_ptr<LeptValue>( new LeptValue{ .type=LeptType::LEPT_STRING ,.str=res});
+			return res;
 		}
 		case '\\':
 		{
@@ -92,6 +93,10 @@ unique_ptr <LeptValue> LeptParseString(LeptContent& content)
 	throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(json.substr(0, n)));
 
 }
+unique_ptr <LeptValue> LeptParseString(LeptContent& content)
+{
+	return unique_ptr<LeptValue>(new LeptValue{ .type = LeptType::LEPT_STRING ,.str = LeptParseStringRaw(content) });
+}
 
 unique_ptr <LeptValue> LeptParseValue(LeptContent& content);
 unique_ptr <LeptValue> LeptParseArray(LeptContent& content)
@@ -123,12 +128,54 @@ unique_ptr <LeptValue> LeptParseArray(LeptContent& content)
 			json.remove_prefix(1);
 			return p_ary;
 		default:
-			throw Exceptions::parse_miss_comma_or_square_bracket_error(GetInvalidValueErrorMsg(msg));;
+			throw Exceptions::parse_miss_comma_or_square_bracket_error(GetInvalidValueErrorMsg(msg));
 		}
 	}
-	
+}
 
+unique_ptr <LeptValue> LeptParseObject(LeptContent& content)
+{
+	string_view& json = content.json;
+	auto msg = json;
+	json.remove_prefix(1);// remove '{'
 
+	unique_ptr <LeptValue> obj(new LeptValue{ .type = LeptType::LEPT_OBJECT,.obj = {} });
+	LeptParseWhitespace(content);
+	if (json.empty()) throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+	if (json.front() == '}')
+	{
+		json.remove_prefix(1);
+		LeptParseWhitespace(content);
+
+		return obj;
+	}
+	while (true)
+	{
+		LeptParseWhitespace(content);
+		if (json.empty()) throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+		string key = LeptParseStringRaw(content);
+		LeptParseWhitespace(content);
+		if(json.front()!=':')throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+		json.remove_prefix(1);
+		LeptParseWhitespace(content);
+		if (json.empty())throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+		obj->obj.insert({ std::move(key), LeptParseValue(content) });
+
+		LeptParseWhitespace(content);
+		if (json.empty())throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(msg));
+		switch (json.front())
+		{
+		case ',':
+			json.remove_prefix(1);
+			break;
+		case '}':
+			json.remove_prefix(1);
+			LeptParseWhitespace(content);
+			return obj;
+		default:
+			throw Exceptions::parse_miss_comma_or_square_bracket_error(GetInvalidValueErrorMsg(msg));
+		}
+	}
 }
 
 unique_ptr <LeptValue> LeptParseLiteral(LeptContent& content, LeptType type,string_view value)
@@ -136,6 +183,7 @@ unique_ptr <LeptValue> LeptParseLiteral(LeptContent& content, LeptType type,stri
 	string_view& json = content.json;
 	if (!json.starts_with(value)) throw Exceptions::invaild_value_error(GetInvalidValueErrorMsg(value));
 	json.remove_prefix(value.size());
+	LeptParseWhitespace(content);
 	return make_unique<LeptValue>(type);
 }
 
@@ -150,6 +198,7 @@ unique_ptr <LeptValue> LeptParseValue(LeptContent& content)
 	case 'f':return LeptParseLiteral(content, LeptType::LEPT_FALSE, "false");
 	case '"':return LeptParseString(content);
 	case '[':return LeptParseArray(content);
+	case '{':return LeptParseObject(content);
 
 	default:return LeptParseNumber(content);
 	}

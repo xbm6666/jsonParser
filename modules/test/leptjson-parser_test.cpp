@@ -26,6 +26,7 @@ void LeptjsonParserTest::run()
 	TestParseNoValue();
 	TestParseString();
 	TestParseArray();
+	TestParseObject();
 	TestParseInvaildValue();
 	TestParseRootNotSingular();
 }
@@ -72,13 +73,38 @@ void LeptjsonParserTest::TestParseString()
 
 void LeptjsonParserTest::TestParseArray()
 {
-	Test("[ ]", LeptValue{ .type = LeptType::LEPT_ARRAY,.ary = {} });
 
-	LeptValue lv{ .type = LeptType::LEPT_ARRAY,.ary = {} };
+	LeptValue lv{.type = LeptType::LEPT_ARRAY,.ary = {} };
+	Test("[ ]", lv);
+
 	lv.ary.emplace_back(new LeptValue{ .type = LeptType::LEPT_STRING,.str = "Hello" });
 	Test("[ \"Hello\"]",lv);
 
+
+	lv.ary.emplace_back(new LeptValue{.type = LeptType::LEPT_ARRAY,.ary = {} });
+	
+	lv.ary[1]->ary.emplace_back(new LeptValue{ .type = LeptType::LEPT_NUMBER,.number = 3 });
+	Test("[ \"Hello\",[3]]", lv);
 }
+
+void LeptjsonParserTest::TestParseObject()
+{
+	LeptValue lv{ .type = LeptType::LEPT_OBJECT,.obj = {} };
+	Test(" { } ", lv);
+
+	lv.obj.emplace("n", new LeptValue{ .type = LeptType::LEPT_NULL });
+	Test(R"( { "n" : null } )", lv);
+
+	lv.obj.emplace("i", new LeptValue{ .type = LeptType::LEPT_NUMBER,.number=123 });
+	Test(R"( { "n" : null,"i":123 } )", lv);
+
+	lv.obj.emplace("a", new LeptValue{ .type = LeptType::LEPT_ARRAY,.ary = {} });
+	Test(R"( { "n" : null,"i":123, "a":[] } )", lv);
+
+	lv.obj.emplace("o", new LeptValue{ .type = LeptType::LEPT_OBJECT,.obj = {} });
+	Test(R"( { "n" : null,"i":123, "a":[],"o":{} } )", lv);
+}
+
 
 void LeptjsonParserTest::TestParseNoValue()
 {

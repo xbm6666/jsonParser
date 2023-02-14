@@ -16,6 +16,7 @@ public:
 	void TestParseNumber();
 	void TestParseString();
 	void TestParseArray();
+	void TestParseObject();
 
 	void TestParseNoValue();
 	void TestParseInvaildValue();

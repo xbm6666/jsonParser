@@ -4,6 +4,7 @@ module;
 #include<string>
 #include<iostream>
 #include<vector>
+#include <unordered_map>
 
 export module Leptjson:Parser;
 
@@ -32,6 +33,7 @@ struct LeptValue
 		double number;
 		string str;
 		vector<unique_ptr <LeptValue>>ary;
+		unordered_multimap<string, unique_ptr <LeptValue>>obj;
 	};
 
 
@@ -54,8 +56,10 @@ struct LeptValue
 		case leptjson::LeptType::LEPT_ARRAY:
 			if (ary.size() != lhs.ary.size()) return false;
 			for (int i = 0; i < ary.size(); ++i) if (*ary[i] != *lhs.ary[i]) return false;
-			return true;
+			break;
 		case leptjson::LeptType::LEPT_OBJECT:
+			if (obj.size() != lhs.obj.size()) return false;
+			for (auto&[key,value]:obj) if (!lhs.obj.contains(key)||*value!=*lhs.obj.find(key)->second) return false;
 			break;
 		default:
 			break;
@@ -82,6 +86,7 @@ struct LeptValue
 			ary.~vector();
 			break;
 		case leptjson::LeptType::LEPT_OBJECT:
+			obj.~unordered_multimap();
 			break;
 		default:
 			break;
@@ -111,9 +116,11 @@ ostream& operator<<(ostream& os, const LeptValue&lv)
 		break;
 	case leptjson::LeptType::LEPT_ARRAY:
 		os << "ary is ";
-		for (auto& a : lv.ary) os << *a;
+		for (auto& a : lv.ary) os << *a<<"   ";
 		break;
 	case leptjson::LeptType::LEPT_OBJECT:
+		os << "obj is ";
+		for (auto& [key,value] : lv.obj) os << key<<"    "<<*value<<endl;
 		break;
 	default:
 		break;
