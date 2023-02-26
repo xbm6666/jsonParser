@@ -227,4 +227,88 @@ unique_ptr <LeptValue> Parse(string_view json)
 	return ret;
 }
 
+string LeptStringifyString(const string& value)
+{
+	string ret;
+	ret.push_back('"');
+	for (char ch : value)
+	{
+		switch (ch)
+		{
+		case '\"':ret += ("\\\""); break;
+		case '\\':ret += ("\\\\"); break;
+		case '\b':ret += ("\\b"); break;
+		case '\f':ret += ("\\f"); break;
+		case '\n':ret += ("\\n"); break;
+		case '\r':ret += ("\\r"); break;
+		case '\t':ret += ("\\t"); break;
+		case 'u':ret += ("\\u"); break;
+		default:
+			ret += ch;
+		}
+	}
+	ret.push_back('"');
+
+	return ret;
+}
+
+string LeptStringifyValue(const LeptValue& value)
+{
+
+	switch (value.type)
+	{
+		using enum LeptType;
+	case LEPT_NULL:
+		return "null";
+	case LEPT_FALSE:
+		return "false";
+	case LEPT_TRUE:
+		return "true";
+	case LEPT_NUMBER:
+		return to_string(value.number);
+	case LEPT_STRING:
+		return LeptStringifyString(value.str);
+	case LEPT_ARRAY:
+	{
+		string ret;
+		ret.push_back('[');
+		for (int i = 0; i < value.ary.size(); ++i)
+		{
+			if (i > 0) ret += ",";
+			ret += LeptStringifyValue(*value.ary[i]);
+		}
+
+		ret.push_back(']');
+		return ret;
+
+	}
+	case LEPT_OBJECT:
+	{
+		string ret;
+		ret.push_back('{');
+		for (auto&[k,v]:value.obj)
+		{
+			ret += LeptStringifyString(k);
+			ret += ":";
+			ret += LeptStringifyValue(*v);
+			ret += ',';
+		}
+		if (value.obj.empty()) ret.push_back('}');
+		else ret.back() = '}';
+		return ret;
+	}
+	default:
+		std::unreachable();
+		break;
+	}
+	return "";
+}
+
+string LeptStringify(const LeptValue& value)
+{
+	return LeptStringifyValue(value);
+	
+}
+
+
 }

@@ -21,11 +21,19 @@ public:
 	void TestParseNoValue();
 	void TestParseInvaildValue();
 	void TestParseRootNotSingular();
+
+	void TestRoundTrip();
+	void TestRoundTripNumber();
+
+
 	virtual void run() override;
 
 private:
 	void TestException(std:: string_view sv, std::string msg);
 	void Test(std::string_view sv, const leptjson::LeptValue& value);
+	void TestRound(const std::string& str);
+	void TestRoundNumber(const std::string& str);
+
 
 };
 

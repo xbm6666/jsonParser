@@ -7,6 +7,7 @@ module;
 
 export module test_base;
 
+using namespace std;
 
 namespace leptjsonparser_test
 {
@@ -20,11 +21,18 @@ public:
 	void clear(){ test_pass_ = 0, test_count_ = 0; };
 
 protected:
+	bool equal(const auto& res, const auto& value)
+	{
+		return res == value;
+	}
+	bool equal(double res,double value)
+	{
+		return abs(res - value)<1e-5;
+	}
 	void expect(const auto& res, const auto& value)
 	{
 		++test_count_;
-
-		if (res == value)
+		if (equal(res ,value))
 		{
 			++test_pass_;
 

@@ -131,7 +131,7 @@ ostream& operator<<(ostream& os, const LeptValue&lv)
 
 export unique_ptr <LeptValue> ParseFile(const string&filename);
 export unique_ptr <LeptValue> Parse(string_view json);
-
+export string LeptStringify(const LeptValue& value);
 
 	
 }
